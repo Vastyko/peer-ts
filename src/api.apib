@@ -1,0 +1,1310 @@
+FORMAT: 1A
+HOST: https://apis.maxhub.vip/teams
+
+# 1. Teams 会议协作平台API接口协议
+
+Teams 会议协作平台是围绕会议提供相关服务的平台。其中，在会前提供会议日程、预约相关的管理，支持个人通讯录，团队来管理与会人员，在会中提供文件的上传、个人的会议笔记记录，在会后提供会议纪要的分享，历史会议的查看。
+
+## 1.1 统一约定
+
+- 全文中相同的字段，代表相同的含义。不可能有任何歧义。
+
+## 1.2 错误码定义
+
++ 客户端参数错误(4xx错误)
+
+定义服务器验证客户端提交的参数失败的错误返回。
+
+返回在Body的code验证码如下：
+
+::: note
+HTTP Status |  code    | Description
+-----------:|---------:|  -----------
+  400       | 4001000  | 输入参数错误（缺少必要的参数，或者参数不正确）
+  400       | 4001001  | 配置邮箱SMTP配置错误
+  400       | 4001002  | 配置邮箱用户密码错误
+  403       | 4031003  | 用户权限验证失败，当前用户不能操作此接口
+  403       | 4031006  | 退出会议失败。主持人不能退出会议，只能取消会议
+  403       | 4031007  | 当前状态不正确。接受邀请/拒绝失败，成员状态不在邀请状态，或者会议纪要已发布，不能再次修改
+  404       | 4041000  | 资源不存在，如查询不到用户信息，查询不到
+:::
+
++ 服务内部错误(500错误)
+
+定义服务器验证接受客户端请求成功后，内部不能正确处理的错误返回。
+
+返回在Body的code验证码如下：
+
+::: note
+HTTP Status |  code    | Description
+-----------:|---------:|  -----------
+  500       | 5001000  | 服务器内部错误
+  501       | 5011000  | 配置邮箱失败，无法访问推送系统
+:::
+
+## 1.3 名词解释
+
++ 用户
+
+使用本系统的最终用户。系统实体标识字段为userId。
+注意：该 userId 和账号系统返回的 userId 并不一致。userId 为登录时返回的 _id 字段
+
++ 当前用户
+
+对于需要 user token 鉴权的接口，当前用户代表对应 token 的 userId。不需要 user token 鉴权的接口，该名词无意义。
+如无特殊说明，所有涉及到 userId 的场景，默认要求都是当前用户
+
++ 会议
+
+本系统中的虚拟会议。系统实体标识字段为 meetingId。
+
++ 我的会议记录
+
+针对于单独用户的会议记录，一个会议中每个人都有自己的会议记录，可能每个人的会议记录都是相同内容的拷贝。
+
++ 会议纪要
+
+会议的总结记录，记录跟随会议。英文单词 MeetingSummary
+
++ 会议笔记
+
+会议的个人笔记，记录跟随用户。英文单词 note
+
+## 1.4 认证说明
+
+使用账号系统作为认证系统
+
++ 用户访问接口
+
+每次请求时，在Header头的设置Authorization值，`用户访问令牌`。具体参考每次请求协议。
+
++ 客户端访问接口
+
+每次请求时，在Header附带`客户端访问令牌`。具体参考每次请求协议。
+
+# Group 2. 账号接口
+
+账号接口直接对接账号系统的授权网页，使用账号系统提供的授权码鉴权方式。具体流程可参考账号系统接入文档中的授权码模式登录。
+
+## 2.1 获取授权码 [/api/pauth/authorize?response_type={response_type}&scope={scope}&client_id={client_id}&redirect_uri={redirect_uri}&state={state}&platform={platform}]
+
++ Parameters
+    + response_type: code (string, required) - 固定参数
+    + scope: basic (string, required) - 固定参数
+    + client_id: `1525efbf-bd2c-efbf-bdef-bfbd4550efbf` (string, required) - 客户端 id，向账号系统申请
+    + redirect_uri: https://example.com (string, required) - 表示重定向回调地址的uri。uri必须符合创建客户端时的callbackUri设置规则。
+    + state: xyz (string, optional) - 状态，任意值。账号系统会原封不动返回这个值
+    + platform: web (string, optional) - 平台，用于给前端进行UI适配。app：移动客户端，pc-app：桌面客户端，maxhub：MAXHUB，web：桌面端浏览器，weixin：移动端微信，mobile：移动端浏览器。默认显示移动端微信版面。
+
+### 2.1.1 获取授权码 [GET]
+
+该请求会重定向至对应的账号系统，显示账号系统的登录页。网页登录成功后，会返回重定向信息，重定向的地址为接口参数，redirect_uri。
+比如 https://example.com?code=12345
+客户端应该拦截此重定向，截取接口中的code，调用2.2.1的登录接口进行登录操作。
+
++ Response 304 (text/html)
+
+## 2.2 授权登录 [/api/pauth/token?code={code}&grant_type=authorization]
+
+### 2.2.1 登录 [POST]
+
+客户端在前端获取到 code 后，通过此接口进行登录，返回 token 信息以及用户信息
+
++ Parameters
+    + code: `code` (string, required) - 账号服务器回调的授权码
+    
++ Response 200 (application/json)
+    + Attributes(Account)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 3. 用户接口协议
+
+## 3.1 用户集合 [/api/users?mobile={mobile}&email={email}]
+
++ Parameters
+
+    + mobile: `13929561881` (string, optional) - 通过手机号查询，和邮箱互斥
+    + email: `luhui@cvte.com` (string, optional) - 通过邮箱查询，和手机号互斥
+
+### 3.1.1 查询用户信息 [GET]
+
+1. 手机号和邮箱，只会返回一个，根据查询的条件决定。用手机号查询，则返回手机号信息，用邮箱查询，则返回邮箱信息
+2. 返回的信息里，手机号和邮箱只显示部分信息
+3. 对于未注册用户，如果该手机号或邮箱从未被其他人邀请加入会议或者团队，则返回404，否则返回相应的 userId，此时 systemId 为空。客户端应通过 systemId 是否为空来判断该用户是否已注册
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(User)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 3.2 用户 [/api/users/{userId}]
+
++ Parameters
+
+    + userId: `1525efbf-bd2c-efbf-bdef-bfbd4550efbf` (string, required) - 用户 id
+
+### 3.2.1 配置邮箱 [PATCH /api/users/{userId}/actions/config_mail]
+
+配置邮箱，同时在推送系统里注册邮箱信息
+
++ Parameters
+
+    + userId: `1525efbf-bd2c-efbf-bdef-bfbd4550efbf` (string, required) - 用户 id
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(object)
+        + email: `luhui@cvte.com` (string, required) - 邮箱
+        + username: `base64(luhui)` (string, optional) - 邮箱的用户名base64编码，不填写则默认提取邮箱的名称
+        + password: `base64(12345678)` (string, required) - 邮箱的密码
+        + smtpServer: `smtp.cvte.com` (string, optional) - 发件服务器
+        + smtpPort: 25 (number, optional) - 发件服务器端口
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 3.3 我的会议记录集合 [/api/users/{userId}/meeting_records?page={page}&row={row}&state={state}]
+
++ Parameters
+    + userId: `cb5222accd2acec` (string, required) 用户 id
+    + state: 0 (number, required) 查询对应状态对会议。0为待确认会议，1为当前会议，2为历史会议
+    + page: 1 (number, required) 分页查询，对应的页数
+    + row: 10 (number, required) 每页的记录数
+
+### 3.3.1 查询我的会议列表 [GET]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(MeetingRecordList)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 3.4 我的会议记录 [/api/users/{userId}/meeting_records/{meetingId}]
+
++ Parameters
+    + userId: `cb5222accd2acec` (string, required) 用户 id
+    + meetingId: `cb5222ac-cd2a-11e7-abc4-cec278b6b50b` (string, required) 会议记录 id
+
+### 3.4.1 更新笔记 [PATCH]
+
+更新笔记操作
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes
+        + noteContent: `我的笔记内容` (string, optional) - 更新我的笔记内容
+        + noteSubject: `我的笔记标题` (string, optional) - 更新我的笔记主题
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 3.4.2 删除会议记录 [DELETE /api/users/{userId}/meeting_records/{meetingId}]
+
+删除一条会议记录，只能删除已结束的会议记录
+
++ Parameters
+    + userId: `cb5222accd2acec` (string, required) 用户 id
+    + meetingId: `cb5222accd2acec` (string, required) 会议 id
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 3.4.3 已读会议纪要 [PATCH /api/users/{userId}/meeting_records/{meetingId}/state/read]
+
+标记会议纪要已读，当前仅当会议纪要发布时生效
+
++ Parameters
+    + userId: `cb5222accd2acec` (string, required) 用户 id
+    + meetingId: `cb5222accd2acec` (string, required) 会议 id
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 4. 会议接口协议
+
+需要以用户身份操作的接口协议。
+
+## 4.1 会议集合 [/api/meetings]
+
+### 4.1.1 预约会议 [POST /api/meetings/actions/schedule]
+
+1. 以当前用户的身份预约一个会议
+2. 会议结束时间必须小于开始时间
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(object)
+        + subject: `交互评审` (string, required) - 会议标题
+        + content: `teams 一期交互评审` (string, optional) - 会议内容
+        + beginTime: 1532920897000 (number, required) - 会议开始时间，unix时间戳，单位毫秒
+        + endTime: 1532930897000 (number, required) - 会议结束时间，unix时间戳，单位毫秒
+        + address: 科珠425 (string, optional) - 会议地点
+        + members: (InviteMember) - 与会成员
+        + attachments: (IDs, optional) - 会议附件fileId 列表
+
++ Response 201
+    + Attributes (Meeting)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 4.1.2 即时会议 [POST /api/meetings/actions/immediate]
+
+用户立即创建一个会议，不用填写任何信息
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 201
+    + Attributes (Meeting)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 4.2 会议 [/api/meetings/{meetingId}]
+
++ Parameters
+    + meetingId (string, required) - 会议ID
+
+### 4.2.1 查询会议信息 [GET]
+
+返回单个会议信息详情
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(Meeting)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 4.2.2 修改会议信息 [PATCH]
+
+1. 修改会议的基本信息，只需要提供修改的字段即可
+2. 只有主持人才可以修改会议信息
+3. 会议的开始时间必须小于结束时间
+4. 会议结束后，无法修改相关信息
+
++ Request
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+        
+    + Attributes(object)
+        + `subject`: `交互评审会议` (string, optional) - 会议主题
+        + `content`: `teams 的交互评审` (string, optional) - 会议的内容描述
+        + `beginTime`: 1532920897000 (number, optional) - 会议开始时间
+        + `endTime`: 1532930897000 (number, optional) - 会议结束时间
+        + `address`: `科珠425` (string, optional) - 会议地点
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 4.2.3 取消会议/取消预约 [PATCH /api/meetings/{meetingId}/state/cancel]
+
+1. 取消会议，同步删除所有人的会议记录。
+2. 只有主持人才有此权限
+3. 会议的 state 值变为2
+
++ Parameters
+    + meetingId (string, required) - 会议ID
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 4.2.4 结束会议 [PATCH /api/meetings/{meetingId}/state/finish]
+
+1. 会议进入结束状态，进入结束状态的会议才能发布纪要
+2. 只有主持人才有此权限
+3. 会议的 state 值会变为3
+
++ Parameters
+    + meetingId (string, required) - 会议ID
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 4.3 与会人员集合 [/api/meetings/{meetingId}/members]
+
++ Parameters
+    + meetingId (string, required) - 会议ID
+
+### 4.3.1 邀请与会人员 [POST]
+
+1. 邀请与会人员，会给对应的与会人员发送消息。
+2. 仅支持手机号或者邮箱
+3. 当前用户必须为会议中的成员
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+    
+    + Attributes(InviteMember)
+
++ Response 200
+    + Attributes(Meeting)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 4.4 与会人员 [/api/meetings/{meetingId}/members/{memberId}]
+
+### 4.4.1 退出会议 [DELETE]
+
+1. memberId 必须为当前用户
+2. 主持人不能退出会议
+
++ Parameters
+    + meetingId (string, required) - 会议ID
+    + memberId (string, required) - 用户ID
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 4.4.2 确认/拒绝邀请 [PATCH]
+
+1. 修改与会人员的状态，1为拒绝，2为确认，不支持其他状态
+2. memberId 必须为当前用户
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes
+        + state: 2 (number, required) - 邀请状态，1为拒绝，2为确认
+
++ Response 204
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 4.4 附件 [/api/meetings/{meetingid}/attachments]
+
++ Parameters
+    + meetingid (string, required) - 会议ID
+
+### 4.4.1 查询附件信息 [GET]
+
+当前用户在与会人员中才可查询
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(AttachmentList)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 4.4.2 上传附件 [POST]
+
+当前用户在与会人员中才可以上传附件
+
++ Request (multipart/form-data)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(AttachmentList)
+
++ Response 201 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 4.4.3 删除附件 [DELETE /api/meetings/{id}/attachments/{shareId}]
+
+当前用户在与会人员中才可以上传附件
+
++ Parameters
+    + id (string, required) - 会议ID
+    + shareId (string, required) - 在云盘的 id
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 5. 会议纪要
+
+## 5.1 会议纪要 [/api/meeting_summaries/{meetingId}]
+
++ Parameters
+    + meetingId (string, required) - 会议ID
+
+### 5.1.1 发布会议纪要 [PATCH /api/meeting_summaries/{meetingId}/state/publish]
+
+1. 只有主持人可以发布会议纪要
+2. 只有填写了地点、人物之后才能发布
+3. 当前用户必须是主持人才可以发布会议纪要
+
++ Parameters
+    + meetingId (string, required) - 会议ID
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+    
+    + Attributes(object)
+        + subject: '交互评审结论' (string, required) - 会议纪要标题
+        + content: '砍需求' (string, required) - 会议纪要内容
+
++ Response 201
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 5.1.2 更新会议纪要 [PATCH]
+该接口暂不实现
+
+1. 更新会议纪要，只是保存纪要至服务器，但是不发布，纪要状态仍是草稿。
+2. 只有纪要是草稿状态才能保存。
+3. 只有主持人才能更新会议纪要
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+    
+    + Attributes(object)
+        + subject: '交互评审结论' (string, optional) - 会议纪要标题
+        + content: '砍需求' (string, optional) - 会议纪要内容
+
++ Response 204
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 5.1.3 分享会议纪要 [POST /api/meeting_summaries/{meetingId}/actions/share]
+该接口暂不实现
+
+1. 分享会议纪要，只有已发布的纪要才能分享。
+2. 只有主持人能分享会议纪要
+
++ Parameters
+    + meetingId: `cb5222accd2acec` (string, required) - 会议ID
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+    
+    + Attributes(string)
+
++ Response 201
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 5.1.4 获取会议纪要 [GET]
+
+1. 只有会议结束时才能获取到会议纪要
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+    
+    + Attributes(string)
+
++ Response 200
+    + Attributes(MeetingSummary)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 6. 通讯录
+
+## 6.1 我的联系人集合 [/api/personal_contacts/{userId}/persons]
+
++ Parameters
+    + userId: `cb5222accd2acec` (string, required) - 用户 id
+
+### 6.1.1 添加联系人 [POST]
+
+1. 给当前用户添加联系人
+2. 当且仅当联系人已注册，且未添加时添加成功
+3. 不能添加自己
+4. 手机号和邮箱二选一，都传则使用手机号
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(object)
+        + mobile: 13929561885 (string, optional) - 通过手机添加
+        + email: `luhui@cvte.com` (string, optional) - 通过邮箱添加
+
++ Response 201 (application/json)
+    + Attributes(ContactPerson)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 6.1.2 查询联系人列表 [GET]
+
+查询当前用户的联系人列表
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(ContactPersonList)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 6.2 我的联系人 [/api/personal_contacts/{userId}/persons/{personId}]
+
++ Parameters
+    + userId: `cb5222accd2acec` (string, required) - 用户 id
+    + personId: `cb5222ac-cd2a-11e7-abc4-cec278b6b50c` (string, required) - 联系人 id
+
+### 6.2.1 删除联系人 [DELETE]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 6.2.2 修改备注 [PATCH]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+
+## 6.3 我的团队集合 [/api/personal_contacts/{userId}/teams?page={page}&row={row}]
+
++ Parameters
+    + userId: `cb5222accd2acec` (string, required) - 用户 id
+
+### 6.3.1 获取我的团队列表 [GET]
+
++ Parameters
+    + userId (string, required) - 用户 id
+    + page (number, required) - 数据分页（本期暂不实现）
+    + row (number, required) - 每页数据数量（本期暂不实现）
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(TeamList)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 7. 团队
+
+## 7.1 团队集合 [/api/teams]
+
+### 7.1.1 创建团队 [POST]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(object)
+        + name: `1602-teams` (string, required) - 团队名称
+
++ Response 200 (application/json)
+    + Attributes(Team)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 7.2 团队 [/api/teams/teamId]
+
++ Parameters
+
+    + teamId: `11caf9ed-f24f-4bc3-98f9-93ab36c9ae21` (string, required) - 团队 id
+
+### 7.2.1 查询团队信息 [GET]
+
+1. 只有团队成员能查询团队信息
+2. 成员信息的手机号和邮箱只显示部分信息
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(Team)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 7.2.2 修改团队信息 [PATCH]
+
++ Parameters
+    + teamId (string, required) - 团队 ID
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(object)
+        name: `1602 windows` (string, required) - 团队名称
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 7.3 团队成员 [/api/teams/{teamId}/members]
+
++ Parameters
+    + teamId (string, required) - 团队 ID
+
+### 7.3.1 邀请团队成员 [POST]
+
+1. 邀请团队成员，同时发送邀请通知
+2. 当前用户必须在团队里才可以邀请团队成员
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(InviteMember)
+
++ Response 200 (application/json)
+    + Attributes(Team)
++ Response 400 (application/json)
+    + Attributes(ErrorInviteTeamMemberFail)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 7.3.2 加入团队 [POST /api/teams/{teamId}/members/actions/join]
+
+如果当前用户已在团队里，则直接返回200，否则返回201
+
++ Parameters
+    + teamId (string, required) - 团队 ID
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 201 (application/json)
+    + Attributes(Team)
++ Response 200 (application/json)
+    + Attributes(Team)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 7.2.3 退出团队 [DELETE /api/teams/{teamId}/members/{userId}]
+
+1. 所有成员退出后，团队自动删除
+2. userId 只能为当前用户
+
++ Parameters
+    + teamId: 123456 (string, required) - 团队 ID
+    + userId: `cb5222accd2acec` (string, required) - 当前用户 id
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 204 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 8. 通知
+
+## 8.1 通知集合 [/api/notifications]
+
+### 8.1.1 查询发送给自己的消息 [GET /api/notifications?noAck={noAck}&page={page}&row={row}&receiver={userId}]
+
+查询发给自己的消息
+
++ Parameters
+
+    + noAck: true (boolean, optional) - true 则只查询未读的消息
+    + page: 1 (number, optional) - 消息的页数，page 和 row 必须同时设置（当前版本暂不实现）
+    + row: 10 (number, optional) - 每页消息的个数，page 和 row 必须同时设置（当前版本暂不实现）
+    + userId: `cb5222accd2acec` (string, required) 用户 id
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(NotificationList)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 9. 操作记录
+
+## 9.1 操作记录 [/api/operation_records]
+
+### 9.1.1 查询操作记录 [GET]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(OperationRecordList)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Group 10. 重复会议
+
+## 10.1 重复会议集合 [/api/repeat_meetings]
+
+### 10.1.1 创建重复会议[POST]
+
+1. 创建重复会议时，批量创建会议
+2. 修改信息时，会批量修改对应的会议信息
+3. 重复时间不能超过当前时间1个月
+4. 开始时间不能小于当前时间
+5. 首次开始时间必须大于首次结束时间
+6. 重复会议结束时间必须大于首次结束时间
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(object)
+        + subject: `交互评审` (string, required) - 会议标题
+        + content: `teams 一期交互评审` (string, optional) - 会议内容
+        + beginTime: 1532920897000 (number, required) - 首次会议开始时间，unix时间戳，单位毫秒
+        + endTime: 1532930897000 (number, required) - 首次会议结束时间，unix时间戳，单位毫秒
+        + address: 科珠425 (string, required) - 会议地点
+        + roomId: 会议室 id (string, required) - 会议室 id
+        + members: (InviteMember) - 与会成员
+        + repeatEndTime: 1532920897000 (number, required) - 重复会议结束时时间，unix时间戳，单位毫秒
+        + repeatType: 0 (number, required) - 重复类型，0为日，1为周
+        + repeatValue: 1 (number, required) - 如果重复类型为日，则表示间隔的天数，至少间隔1天。如果重复类型为周，则表示重复的星期，值为1~7
+
++ Response 201 (application/json)
+    + Attributes(RepeatMeeting)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 10.2 重复会议 [/api/repeat_meetings/:repeat_meeting_id]
+
++ Parameters
+    + repeat_meeting_id: 93ab36c9ae28 (string) - 重复会议 id
+
+### 10.2.1 取消会议 [DELETE]
+
+1. 只有主持人能取消会议
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 10.2.2 修改重复会议信息 [PATCH]
+
+1. 只有会议成员才能修改
+2. 修改信息时，会批量修改对应的会议信息
+3. 重复时间不能超过当前时间1个月
+4. 开始时间不能小于当前时间
+5. 首次开始时间必须大于首次结束时间
+6. 重复会议结束时间必须大于首次结束时间
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(object)
+        + subject: `交互评审` (string, optional) - 会议标题
+        + content: `teams 一期交互评审` (string, optional) - 会议内容
+        + beginTime: 1532920897000 (number, optional) - 首次会议开始时间，unix时间戳，单位毫秒
+        + endTime: 1532930897000 (number, optional) - 首次会议结束时间，unix时间戳，单位毫秒
+        + address: 科珠425 (string, optional) - 会议地点
+        + roomId: 会议室 id (string, optional) - 会议室 id
+        + repeatEndTime: 1532920897000 (number, optional) - 重复会议结束时时间，unix时间戳，单位毫秒
+        + repeatType: 0 (number, optional) - 重复类型，0为日，1为周
+        + repeatValue: 1 (number, optional) - 如果重复类型为日，则表示间隔的天数，至少间隔1天。如果重复类型为周，则表示重复的星期，值为1~7
+
++ Response 200 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+### 10.2.3 查询重复会议信息 [GET]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
++ Response 200 (application/json)
+    + Attributes(RepeatMeeting)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 10.3 重复会议成员集合 [/api/repeat_meetings/:repeat_meeting_id/repeat_meeting_members]
+
++ Parameters
+    + repeat_meeting_id: 93ab36c9ae28 (string) - 重复会议 id
+
+### 10.3.1 添加重复会议成员 [POST]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(InviteMember)
+
++ Response 201 (application/json)
+    + Attributes(RepeatMeeting)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+## 10.4 重复会议成员 [/api/repeat_meetings/:repeat_meetingId/repeat_meeting_members/:repeat_meeting_member_id]
+
++ Parameters
+    + repeat_meeting_id: 93ab36c9ae28 (string, required) - 重复会议 id
+    + repeat_meeting_member_id: 193ab36c9ae28 (string, required) - 重复会议成员 userId
+
+### 10.4.1 退出重复会议 [DELETE]
+
++ Request (application/json)
+
+    + Headers
+
+            Authorization: Bearer 11caf9ed-f24f-4bc3-98f9-93ab36c9ae28
+
+    + Attributes(InviteMember)
+
++ Response 200 (application/json)
++ Response 400 (application/json)
+    + Attributes(ErrorMessage)
++ Response 500 (application/json)
+    + Attributes(ErrorMessage)
+
+# Data Structures
+
+## ErrorMessage (object)
++ code: 4001001 (number) - 错误码
++ message (string) - 错误内容
+
+## SuccessMessage (object)
++ message: ok (string) - 成功描述内容
+
+## Account (object)
++ `_id`: `cb5222accd2acec` - 用户 id
++ `systemId`: `cb5222ac-cd2a-11e7-abc4-cec278b6b50a` - 对应账号系统的 id
++ `access_token`: `f14454c5-83b5-4611-bf47-a9a486824983` - 用户访问令牌
++ `refresh_token`: `f14454c5-83b5-4611-bf47-a9a486824983` - 刷新令牌，用于刷新访问令牌的有效期
++ `expires_in`: 1209600 - 令牌有效期，单位秒。一般为1209600，即14天。
++ `token_type`: `Bearer` - 令牌类型
++ `email`: `luhui@cvte.com` - 邮箱
++ `mobile`: `13929561881` - 手机号
++ `createTime`: 1532920897000 - 用户创建时间
++ `isMailConfig`: true - 邮箱是否配置
++ `avatar`: `https://res.maxhub.vip/img/123` - 头像地址
++ `displayName`: `账号系统的昵称` - 用户昵称
+
+## User (object)
++ `_id`: `cb5222accd2acec` - 用户 id
++ `email`: `luhui@cvte.com` - 邮箱
++ `mobile`: `13929561881` - 手机号
++ `createTime`: 1532920897000 - 用户创建时间
++ `isMailConfig`: true - 邮箱是否配置
++ `avatar`: `https://res.maxhub.vip/img/123` - 头像地址
++ `displayName`: `账号系统的昵称` - 用户昵称
++ `systemId`: `cb5222ac-cd2a-11e7-abc4-cec278b6b50a` - 对应账号系统的 id
+
+## Meeting (object)
++ `_id`: `cb5222accd2acec` - 会议 id
++ `subject`: `交互评审会议` - 会议主题
++ `content`: `teams 的交互评审` - 会议的内容描述
++ `beginTime`: 1532920897000 - 会议开始时间
++ `endTime`: 1532930897000 - 会议结束时间
++ `address`: `科珠425` - 会议地点
++ `masterId`: `cb5222accd2acec` - 主持人 id
++ `shareId`: `cb5222accd2acec` - 云盘共享空间 id
++ `accessKey`: `1234` - 共享空间的访问秘钥
++ `state`: 0 (MeetingState) - 会议状态，0为预约、1进行中、2取消、3完成、4归档，默认为0
++ `members`: (MemberList) - 会议成员
++ `repeatMeeting`: `cb5222accd2acec` - 关联的重复会议 id
++ `order`: (RoomOrder) - 对应的会议室订单
+
+## MemberList (array, fixed)
++ (MeetingMember)
+
+## OperationRecord(object)
++ `attribute`: `/meetings/meetingId/subject` - 修改的属性/对象
++ `preValue`: `交互评审会议` - 修改前的值
++ `curValue`: `【评审】teams 交互` - 修改后的值
++ `meetingId`: `cb5222accd2acec` - 会议 id
++ `modifyUserId`: `cb5222accd2acec` - 修改人 id
+
+## OperationRecordList(array, fixed)
++ (OperationRecord)
+
+## MeetingMember(object)
++ `user`: (User) - 与会者用户信息
++ `meeting`: `cb5222accd2acec` - 会议 id
++ `createTime`: 1532930897000 - 加入会议的时间
++ `state`: 0 (MemberState) - 与会人员当前的状态 - 0为待确认，1为拒绝，2为确认，默认为0
++ from: (From) - 添加来源，0为其他，1为手机，2为邮箱
++ invitor: (User) - 邀请者
+
+## Attachment(object)
++ `downloadUrl`: `res.test.maxhub.vip/share.html?s_id=0f205e93-a737-4267-a33d-b44c4d8941c0&locale=zh_CN#/detail/5a66f2ba-85d3-48ee-b6ad-f342ce3b1eaf/record` - 附件地址
++ `_id`: `cb5222accd2acec` - 附件存储在云盘的 id
++ `meeting`: 所处的会议 id
++ `name`: 文件名
++ `createTime`: 1532930897000 - 文件上传时间
++ `contentType`: jpg - 文件类型
++ `size`: 1024 - 文件大小（字节）
+
+## MeetingState (enum[number])
++ 0 - 预约
++ 1 - 进行中
++ 2 - 取消
++ 3 - 完成
++ 4 - 归档
+### Default: 0
+
+## NoteState (enum[number])
++ 0 - 草稿
++ 1 - 发布
++ 2 - 已读
+### Default: 0
+
+## MemberState (enum[number])
++ 0 - 待确认
++ 1 - 拒绝 
++ 2 - 已确认
+### Default: 0
+
+## ContactPerson(object)
++ `person` (User) - 联系人的用户信息
++ from: (From) - 添加来源，0为其他，1为手机，2为邮箱
++ `remark`: `二狗子` - 备注
++ `createTime`: 1532930897000 (number) - 创建时间
++ `userId`: `cb5222accd2acec` - 所属用户 id
+
+## ContactPersonList(array, fixed)
++ (ContactPerson)
+
+## Team(object)
++ `_id`: `510663` - 团队 id
++ `name`: `1602-teams` - 团队名称
++ `createTime`: 1532930897000 (number) - 创建时间
++ `masterId`: `cb5222accd2acec` - 创建者 id
++ `members` (TeamMemberList) - 团队成员
+
+## TeamList(array, fixed)
++ (Team)
+
+## TeamMember(object)
++ `user`: (User) - 成员的用户信息
++ from: (From) - 添加来源，0为其他，1为手机，2为邮箱
++ createTime: 1532930897000 - 成员加入时间
++ invitor: (User) - 邀请人
+
+## TeamMemberList(array, fixed)
++ (TeamMember)
+
+## Notification(object)
++ `_id`: `cb5222accd2acec` - 通知 id
++ `content`: `会议即将开始` - 消息内容
++ `type`: 1 (NotificationType) - 消息类型
++ `ack`: true - 是否接收到消息
+
+## NotificationList(array, fixed)
++ (Notification)
+
+## NotificationType (enum[number])
++ 1: 会议邀请
++ 2: 会议开启通知
++ 3: 纪要填写提醒
++ 4: 纪要发布通知
++ 5: 信息修改通知
++ 6: 系统通知
+### Default: 1
+
+## MeetingRecord(object)
++ `user`: `cb5222accd2acec` - 用户 id
++ `meeting`: (Meeting)
++ `member`: (MeetingMember) - 所在会议的成员信息
++ `noteContent`: `功能设计有遗漏，需要补充业务流程` - 我的会议笔记
++ `noteSubject`: `功能设计评审会议记录` - 我的会议笔记主题
++ `inviteState`: (MemberState) - 邀请状态
++ `summaryState`: (NoteState) - 会议纪要状态
++ `invitor`: (User) - 邀请者
+
+## MeetingSummary(object)
++ `_id`: `cb5222accd2acec` - 会议 id
++ subject: `会议纪要主题` - 会议纪要主题
++ content: `会议决议` - 会议纪要内容
++ state: (NoteState) - 会议纪要状态
+
+## MeetingRecordList(array, fixed)
++ (MeetingRecord)
+
+## ErrorInviteTeamMemberFail(object)
++ code: 4001001 (number) - 错误码
++ message: `invite fail, mail not config` (string) - 错误内容
++ failUsers (ErrorInviteTeamMemberFailUserList)
+
+## ErrorInviteTeamMemberFailUserList(array, fixed)
++ (ErrorInviteTeamMemberFailUser)
+
+## ErrorInviteTeamMemberFailUser(object)
++ email: luhui@cvte.com - 邮箱
+
+## InviteMember(object)
++ `mobiles`: 13929561880 (array, fixed, optional) - 通过手机添加
++ `emails`: luhui@cvte.com (array, fixed, optional) - 通过邮箱添加
++ `ids`: cb5222accd2acec (array, fixed, optional) - 通过 id 添加，未注册的 id 将被忽略
+
+## From(enum[number])
++ 0
++ 1
++ 2
+### Default: 0
+
+## AttachmentList(array, fixed)
++ (Attachment)
+
+## IDs(array, fixed)
++ `1caf9ed93ab36c9ae28`
+
+## ID (string)
++ `1caf9ed93ab36c9ae28`
+
+## RepeatMeeting(object)
++ subject: `交互评审` (string) - 会议标题
++ content: `teams 一期交互评审` (string) - 会议内容
++ beginTime: 1532920897000 (number) - 首次会议开始时间，unix时间戳，单位毫秒
++ endTime: 1532930897000 (number) - 首次会议结束时间，unix时间戳，单位毫秒
++ address: 科珠425 (string) - 会议地点
++ room: 会议室 (Room) - 会议室 id
++ members: (RepeatMeetingMemberList) - 与会成员
++ repeatEndTime: 1532920897000 (number) - 重复会议结束时时间，unix时间戳，单位毫秒
++ repeatType: 0 (number) - 重复类型，0为日，1为周
++ repeatValue: 1 (number) - 如果重复类型为日，则表示间隔的天数，至少间隔1天。如果重复类型为周，则表示重复的星期，值为1~7
++ master: (User) - 主持人
++ creator: (User) - 创建者
++ state: 0 (number) - 重复会议状态，0为使用中，1为取消
+
+## RepeatMeetingMember(object)
++ _id: `1caf9ed93ab36c9ae28-1caf9ed93ab36c9ae28` - 重复会议与会人员 id
++ user: (User) - 与会人员关联的 user 信息
++ repeatMeeting: `1caf9ed93ab36c9ae28` - 关联的重复会议
++ from: (From) - 添加来源，0为其他，1为手机，2为邮箱
++ invitor: (User) - 邀请者的 user 信息
+
+## RepeatMeetingMemberList(array, fixed)
++ (RepeatMeetingMember)
+
+## RoomOrder (object)
++ orderNo: `1caf9ed93ab36c9ae28` - 订单 id
++ room: `1caf9ed93ab36c9ae28` - 会议室 id
++ startTime: 1532930897000 (number) - 开始时间
++ endTime: 1532930897000 (number) - 结束时间
++ user: (User) - 预定的用户
++ description: '科珠425' - 订单描述
+
+## Room (object)
++ id: `1caf9ed93ab36c9ae28` - 会议室 id
++ name: `324` - 会议室名称
++ area: `科珠` - 会议室所在区域
++ description: `科珠324` - 会议室描述
