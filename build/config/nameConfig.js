@@ -37,5 +37,11 @@ exports.nameConfig = {
     加入团队: "joinTeam",
     退出团队: "exitTeam",
     查询发送给自己的消息: "getShelfMessage",
-    查询操作记录: "getOperationLog"
+    查询操作记录: "getOperationLog",
+    创建重复会议: "createRepeatMeeting",
+    查询重复会议信息: "getRepeatMeetingMessage",
+    取消会议: "cancelRepeatMeeting",
+    修改重复会议信息: "patchRepeatMeeting",
+    添加重复会议成员: "addRepeatMeetingMembers",
+    退出重复会议: "exitRepeatMeeting"
 };

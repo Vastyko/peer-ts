@@ -387,7 +387,8 @@ export const swagger = {
                     beginTime: "1532920897000",
                     endTime: "1532930897000",
                     address: "科珠425",
-                    masterId: "cb5222accd2acec",
+                    master: "cb5222accd2acec",
+                    creator: "cb5222accd2acec",
                     shareId: "cb5222accd2acec",
                     accessKey: "1234",
                     state: 0,
@@ -881,7 +882,8 @@ export const swagger = {
                 beginTime: "1532920897000",
                 endTime: "1532930897000",
                 address: "科珠425",
-                masterId: "cb5222accd2acec",
+                master: "cb5222accd2acec",
+                creator: "cb5222accd2acec",
                 shareId: "cb5222accd2acec",
                 accessKey: "1234",
                 state: 0,
@@ -2243,7 +2245,7 @@ export const swagger = {
                   _id: "510663",
                   name: "1602-teams",
                   createTime: 1532930897000,
-                  masterId: "cb5222accd2acec",
+                  master: "cb5222accd2acec",
                   members: [
                     {
                       user: {
@@ -2344,7 +2346,7 @@ export const swagger = {
                 _id: "510663",
                 name: "1602-teams",
                 createTime: 1532930897000,
-                masterId: "cb5222accd2acec",
+                master: "cb5222accd2acec",
                 members: [
                   {
                     user: {
@@ -2443,7 +2445,7 @@ export const swagger = {
                 _id: "510663",
                 name: "1602-teams",
                 createTime: 1532930897000,
-                masterId: "cb5222accd2acec",
+                master: "cb5222accd2acec",
                 members: [
                   {
                     user: {
@@ -2619,7 +2621,7 @@ export const swagger = {
                 _id: "510663",
                 name: "1602-teams",
                 createTime: 1532930897000,
-                masterId: "cb5222accd2acec",
+                master: "cb5222accd2acec",
                 members: [
                   {
                     user: {
@@ -2722,7 +2724,7 @@ export const swagger = {
                 _id: "510663",
                 name: "1602-teams",
                 createTime: 1532930897000,
-                masterId: "cb5222accd2acec",
+                master: "cb5222accd2acec",
                 members: [
                   {
                     user: {
@@ -3107,26 +3109,8 @@ export const swagger = {
                 repeatEndTime: 1532920897000,
                 repeatType: 0,
                 repeatValue: 1,
-                master: {
-                  _id: "cb5222accd2acec",
-                  email: "luhui@cvte.com",
-                  mobile: "13929561881",
-                  createTime: "1532920897000",
-                  isMailConfig: "true",
-                  avatar: "https://res.maxhub.vip/img/123",
-                  displayName: "账号系统的昵称",
-                  systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-                },
-                creator: {
-                  _id: "cb5222accd2acec",
-                  email: "luhui@cvte.com",
-                  mobile: "13929561881",
-                  createTime: "1532920897000",
-                  isMailConfig: "true",
-                  avatar: "https://res.maxhub.vip/img/123",
-                  displayName: "账号系统的昵称",
-                  systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-                },
+                master: "1caf9ed93ab36c9ae28",
+                creator: "1caf9ed93ab36c9ae28",
                 state: 0
               }
             }
@@ -3165,17 +3149,17 @@ export const swagger = {
         ]
       }
     },
-    "/api/repeat_meetings/:repeat_meeting_id": {
+    "/api/repeat_meetings/{repeat_meeting_id}": {
       get: {
         description: "",
         summary: "10.2.3 查询重复会议信息",
         tags: ["10. 重复会议"],
-        operationId: "ApiRepeatMeetingsRepeatMeetingIdGet",
+        operationId: "ApiRepeatMeetingsByRepeatMeetingIdGet",
         produces: ["application/json"],
         parameters: [
           {
             name: "repeat_meeting_id",
-            in: "query",
+            in: "path",
             required: true,
             type: "string",
             description: "重复会议 id"
@@ -3237,26 +3221,8 @@ export const swagger = {
                 repeatEndTime: 1532920897000,
                 repeatType: 0,
                 repeatValue: 1,
-                master: {
-                  _id: "cb5222accd2acec",
-                  email: "luhui@cvte.com",
-                  mobile: "13929561881",
-                  createTime: "1532920897000",
-                  isMailConfig: "true",
-                  avatar: "https://res.maxhub.vip/img/123",
-                  displayName: "账号系统的昵称",
-                  systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-                },
-                creator: {
-                  _id: "cb5222accd2acec",
-                  email: "luhui@cvte.com",
-                  mobile: "13929561881",
-                  createTime: "1532920897000",
-                  isMailConfig: "true",
-                  avatar: "https://res.maxhub.vip/img/123",
-                  displayName: "账号系统的昵称",
-                  systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-                },
+                master: "1caf9ed93ab36c9ae28",
+                creator: "1caf9ed93ab36c9ae28",
                 state: 0
               }
             }
@@ -3298,12 +3264,12 @@ export const swagger = {
         description: "1. 只有主持人能取消会议",
         summary: "10.2.1 取消会议",
         tags: ["10. 重复会议"],
-        operationId: "ApiRepeatMeetingsRepeatMeetingIdDelete",
+        operationId: "ApiRepeatMeetingsByRepeatMeetingIdDelete",
         produces: ["application/json"],
         parameters: [
           {
             name: "repeat_meeting_id",
-            in: "query",
+            in: "path",
             required: true,
             type: "string",
             description: "重复会议 id"
@@ -3358,12 +3324,12 @@ export const swagger = {
           "1. 只有会议成员才能修改\n2. 修改信息时，会批量修改对应的会议信息\n3. 重复时间不能超过当前时间1个月\n4. 开始时间不能小于当前时间\n5. 首次开始时间必须大于首次结束时间\n6. 重复会议结束时间必须大于首次结束时间",
         summary: "10.2.2 修改重复会议信息",
         tags: ["10. 重复会议"],
-        operationId: "ApiRepeatMeetingsRepeatMeetingIdPatch",
+        operationId: "ApiRepeatMeetingsByRepeatMeetingIdPatch",
         produces: ["application/json"],
         parameters: [
           {
             name: "repeat_meeting_id",
-            in: "query",
+            in: "path",
             required: true,
             type: "string",
             description: "重复会议 id"
@@ -3423,17 +3389,18 @@ export const swagger = {
         ]
       }
     },
-    "/api/repeat_meetings/:repeat_meeting_id/repeat_meeting_members": {
+    "/api/repeat_meetings/{repeat_meeting_id}/repeat_meeting_members": {
       post: {
         description: "",
         summary: "10.3.1 添加重复会议成员",
         tags: ["10. 重复会议"],
-        operationId: "ApiRepeatMeetingsRepeatMeetingIdRepeatMeetingMembersPost",
+        operationId:
+          "ApiRepeatMeetingsRepeatMeetingMembersByRepeatMeetingIdPost",
         produces: ["application/json"],
         parameters: [
           {
             name: "repeat_meeting_id",
-            in: "query",
+            in: "path",
             required: true,
             type: "string",
             description: "重复会议 id"
@@ -3504,26 +3471,8 @@ export const swagger = {
                 repeatEndTime: 1532920897000,
                 repeatType: 0,
                 repeatValue: 1,
-                master: {
-                  _id: "cb5222accd2acec",
-                  email: "luhui@cvte.com",
-                  mobile: "13929561881",
-                  createTime: "1532920897000",
-                  isMailConfig: "true",
-                  avatar: "https://res.maxhub.vip/img/123",
-                  displayName: "账号系统的昵称",
-                  systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-                },
-                creator: {
-                  _id: "cb5222accd2acec",
-                  email: "luhui@cvte.com",
-                  mobile: "13929561881",
-                  createTime: "1532920897000",
-                  isMailConfig: "true",
-                  avatar: "https://res.maxhub.vip/img/123",
-                  displayName: "账号系统的昵称",
-                  systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-                },
+                master: "1caf9ed93ab36c9ae28",
+                creator: "1caf9ed93ab36c9ae28",
                 state: 0
               }
             }
@@ -3562,13 +3511,13 @@ export const swagger = {
         ]
       }
     },
-    "/api/repeat_meetings/:repeat_meetingId/repeat_meeting_members/:repeat_meeting_member_id": {
+    "/api/repeat_meetings/{repeat_meetingId}/repeat_meeting_members/{repeat_meeting_member_id}": {
       delete: {
         description: "",
         summary: "10.4.1 退出重复会议",
         tags: ["10. 重复会议"],
         operationId:
-          "ApiRepeatMeetingsRepeatMeetingIdRepeatMeetingMembersRepeatMeetingMemberIdDelete",
+          "ApiRepeatMeetingsRepeatMeetingMembersByRepeatMeetingIdAndRepeatMeetingMemberIdDelete",
         produces: ["application/json"],
         parameters: [
           {
@@ -3580,7 +3529,7 @@ export const swagger = {
           },
           {
             name: "repeat_meeting_member_id",
-            in: "query",
+            in: "path",
             required: true,
             type: "string",
             description: "重复会议成员 userId"
@@ -3600,6 +3549,13 @@ export const swagger = {
             schema: {
               $ref: "#/definitions/InviteMember"
             }
+          },
+          {
+            name: "repeat_meetingId",
+            in: "path",
+            required: true,
+            type: "string",
+            description: ""
           }
         ],
         responses: {
@@ -3798,7 +3754,8 @@ export const swagger = {
         beginTime: "1532920897000",
         endTime: "1532930897000",
         address: "科珠425",
-        masterId: "cb5222accd2acec",
+        master: "cb5222accd2acec",
+        creator: "cb5222accd2acec",
         shareId: "cb5222accd2acec",
         accessKey: "1234",
         state: 0,
@@ -3881,8 +3838,13 @@ export const swagger = {
           example: "科珠425",
           type: "string"
         },
-        masterId: {
+        master: {
           description: "主持人 id",
+          example: "cb5222accd2acec",
+          type: "string"
+        },
+        creator: {
+          description: "会议创建者 id",
           example: "cb5222accd2acec",
           type: "string"
         },
@@ -4148,7 +4110,7 @@ export const swagger = {
         _id: "510663",
         name: "1602-teams",
         createTime: 1532930897000,
-        masterId: "cb5222accd2acec",
+        master: "cb5222accd2acec",
         members: [
           {
             user: {
@@ -4194,7 +4156,7 @@ export const swagger = {
           type: "number",
           format: "double"
         },
-        masterId: {
+        master: {
           description: "创建者 id",
           example: "cb5222accd2acec",
           type: "string"
@@ -4276,7 +4238,8 @@ export const swagger = {
           beginTime: "1532920897000",
           endTime: "1532930897000",
           address: "科珠425",
-          masterId: "cb5222accd2acec",
+          master: "cb5222accd2acec",
+          creator: "cb5222accd2acec",
           shareId: "cb5222accd2acec",
           accessKey: "1234",
           state: 0,
@@ -4508,26 +4471,8 @@ export const swagger = {
         repeatEndTime: 1532920897000,
         repeatType: 0,
         repeatValue: 1,
-        master: {
-          _id: "cb5222accd2acec",
-          email: "luhui@cvte.com",
-          mobile: "13929561881",
-          createTime: "1532920897000",
-          isMailConfig: "true",
-          avatar: "https://res.maxhub.vip/img/123",
-          displayName: "账号系统的昵称",
-          systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-        },
-        creator: {
-          _id: "cb5222accd2acec",
-          email: "luhui@cvte.com",
-          mobile: "13929561881",
-          createTime: "1532920897000",
-          isMailConfig: "true",
-          avatar: "https://res.maxhub.vip/img/123",
-          displayName: "账号系统的昵称",
-          systemId: "cb5222ac-cd2a-11e7-abc4-cec278b6b50a"
-        },
+        master: "1caf9ed93ab36c9ae28",
+        creator: "1caf9ed93ab36c9ae28",
         state: 0
       },
       type: "object",
@@ -4589,10 +4534,14 @@ export const swagger = {
           format: "double"
         },
         master: {
-          $ref: "#/definitions/User"
+          description: "主持人",
+          example: "1caf9ed93ab36c9ae28",
+          type: "string"
         },
         creator: {
-          $ref: "#/definitions/User"
+          description: "创建者",
+          example: "1caf9ed93ab36c9ae28",
+          type: "string"
         },
         state: {
           description: "重复会议状态，0为使用中，1为取消",

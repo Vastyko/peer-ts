@@ -1,0 +1,11 @@
+{
+  "nameConfig": "./name.json",
+  "apibPath": "./api.md",
+  "headStr": "import { Spore } from \"../http/region\";\nimport { checki } from \"../../utils/checkOperator\";\n type integer = number;",
+  "output": "./Spore.ts",
+  "outputNameConfig": "./outNameConfig.json",
+  "exceptHeaders": {
+    "Content-Type": "annotation"
+  },
+  "loggerDir": "./"
+}

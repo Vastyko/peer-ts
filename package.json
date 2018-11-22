@@ -1,9 +1,19 @@
 {
   "dependencies": {
+    "@types/jsonfile": "^4.0.1",
     "@types/node": "^10.5.8",
+    "apib2swagger": "^1.5.0",
+    "jsonfile": "^5.0.0",
     "moment": "^2.22.2"
   },
   "scripts": {
-    "build": "cd ./build \n node ./build/index.js"
-  }
+    "build": "cd ./build \n node ./build/index.js",
+    "work": "tsc --watch",
+    "convert": "apib2swagger -i build/api.md -o swagger.json",
+    "server": "apib2swagger -i api.md -s -p 3000"
+  },
+  "bin": {
+    "peer": "./build/index.js"
+  },
+  "name": "peer.ts"
 }

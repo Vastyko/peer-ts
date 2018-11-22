@@ -1,7 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const writeTsfFile_1 = require("./writeTsfFile");
-const commondConfig_1 = require("../commondConfig");
 class Auto {
     constructor() {
         this.value = [];
@@ -77,16 +75,13 @@ class OneName {
         };
     }
     buildResponse(obj) {
-        const value = [];
-        const code = [];
         const okResponse = this.sporeOneResonse("response");
         const wrongResonse = this.sporeOneResonse("ominous");
         for (const xCode in obj) {
-            value.push(obj[xCode]);
-            code.push(xCode);
             const spore = {
                 code: xCode,
-                value: obj[xCode]
+                // 检查数据的格式'{...}'
+                value: obj[xCode][0] === "{" ? obj[xCode] : "{}"
             };
             if (xCode < "300") {
                 okResponse.push(spore);
@@ -102,10 +97,10 @@ class OneName {
         return `export const ${method} = (apiUrl:string) => Spore<path & query, body, header, response>(apiUrl).${method}\n`;
     }
     buildChecked() {
-        return `export type checked = checki<ominous> | checki<response>\n`;
+        return `export type checked = checki<any> | checki<response>\n`;
     }
 }
-function analy(tsOption) {
+function analy(tsOption, headStr) {
     const nameCollector = [];
     const auto = new Auto();
     for (const api in tsOption) {
@@ -116,9 +111,7 @@ function analy(tsOption) {
             auto.addApi(api, oneApi[method].name, method, oneApi[method].summary);
         }
     }
-    writeTsfFile_1.tsFile
-        .clear()
-        .log(commondConfig_1.config.headStr + nameCollector.join("\n\n") + auto.getValue());
+    return headStr + nameCollector.join("\n\n") + auto.getValue();
 }
 exports.analy = analy;
 /*

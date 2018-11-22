@@ -1,6 +1,3 @@
-import { tsFile } from "./writeTsfFile";
-import { config } from "../commondConfig";
-
 class Auto {
   value: string[] = [];
   addApi(apiUrl: string, name: string, method: string, summary: string) {
@@ -94,18 +91,15 @@ class OneName {
     };
   }
   buildResponse(obj: { [x: string]: string }) {
-    const value: string[] = [];
-    const code: string[] = [];
-
     const okResponse = this.sporeOneResonse("response");
     const wrongResonse = this.sporeOneResonse("ominous");
 
     for (const xCode in obj) {
-      value.push(obj[xCode]);
-      code.push(xCode);
       const spore = {
         code: xCode,
-        value: obj[xCode]
+
+        // 检查数据的格式'{...}'
+        value: obj[xCode][0] === "{" ? obj[xCode] : "{}"
       };
       if (xCode < "300") {
         okResponse.push(spore);
@@ -121,11 +115,11 @@ class OneName {
     return `export const ${method} = (apiUrl:string) => Spore<path & query, body, header, response>(apiUrl).${method}\n`;
   }
   buildChecked() {
-    return `export type checked = checki<ominous> | checki<response>\n`;
+    return `export type checked = checki<any> | checki<response>\n`;
   }
 }
 
-export function analy(tsOption) {
+export function analy(tsOption, headStr: string) {
   const nameCollector: string[] = [];
   const auto = new Auto();
   for (const api in tsOption) {
@@ -137,9 +131,7 @@ export function analy(tsOption) {
     }
   }
 
-  tsFile
-    .clear()
-    .log(config.headStr + nameCollector.join("\n\n") + auto.getValue());
+  return headStr + nameCollector.join("\n\n") + auto.getValue();
 }
 
 /*
