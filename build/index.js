@@ -1,24 +1,22 @@
-#! node
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const fs = require("fs");
-const path = require("path");
-const jsonfile = require("jsonfile");
-const peer_1 = require("./engine/peer");
+#!/usr/bin/env node
+import * as fs from "fs";
+import * as path from "path";
+import * as jsonfile from "jsonfile";
+import { Peer } from "./engine/peer";
 var apib2swagger = require("apib2swagger"), options = { preferReference: true };
 function ConvertToSwagger(apiPath, func) {
-    const apiStr = fs.readFileSync(apiPath).toString();
+    var apiStr = fs.readFileSync(apiPath).toString();
     function CheckApiStr(str) {
-        let rus = "";
-        let len = str.length;
-        for (let i = 0; i < len; i++) {
+        var rus = "";
+        var len = str.length;
+        for (var i = 0; i < len; i++) {
             if (str[i] && str[i].charCodeAt(0) > 9) {
                 rus += str[i];
             }
         }
         return rus;
     }
-    let checkApiStr = CheckApiStr(apiStr);
+    var checkApiStr = CheckApiStr(apiStr);
     apib2swagger.convert(checkApiStr, options, function (error, result) {
         if (error) {
             console.error(error);
@@ -29,7 +27,7 @@ function ConvertToSwagger(apiPath, func) {
     });
 }
 function PeerBin() {
-    const obj = {
+    var obj = {
         nameConfig: "./name.json",
         apibPath: "./api.md",
         headStr: 'import { Spore } from "../http/region";\nimport { checki } from "../../utils/checkOperator";\n type integer = number;',
@@ -48,17 +46,17 @@ function PeerBin() {
         console.error(err);
     }
     // 预处理读取的数据
-    const apib = path.resolve(obj.apibPath);
-    const output = path.resolve(obj.output);
-    const outputNameConfig = path.resolve(obj.outputNameConfig || obj.nameConfig);
-    const nameConfig = jsonfile.readFileSync(obj.nameConfig);
-    const peerCompile = {
+    var apib = path.resolve(obj.apibPath);
+    var output = path.resolve(obj.output);
+    var outputNameConfig = path.resolve(obj.outputNameConfig || obj.nameConfig);
+    var nameConfig = jsonfile.readFileSync(obj.nameConfig);
+    var peerCompile = {
         headStr: obj.headStr,
         exceptHeaders: obj.exceptHeaders
     };
     if (obj) {
-        ConvertToSwagger(apib, swagger => {
-            const peerObj = peer_1.Peer(swagger, nameConfig, peerCompile);
+        ConvertToSwagger(apib, function (swagger) {
+            var peerObj = Peer(swagger, nameConfig, peerCompile);
             // 输出nameConfig
             fs.writeFileSync(outputNameConfig, peerObj.nameConfig, { flag: "w" });
             // 输出TypesccriptSpore;
@@ -72,3 +70,4 @@ function PeerBin() {
 }
 // 开始运行Peer;
 PeerBin();
+//# sourceMappingURL=index.js.map

@@ -1,21 +1,19 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const analy_1 = require("./analy");
-function Peer(swagger, nameConfig, peerConfig) {
+import { analy } from "./analy";
+export function Peer(swagger, nameConfig, peerConfig) {
     // 记录Peer 生成的中间json; 最后解析tsOption生成的TypescriptSpore;
-    const tsOption = {};
+    var tsOption = {};
     // 记录peer运行生成的推荐配置文件
-    const config = {
+    var config = {
         name: ""
     };
     // 用于生成一条ts属性语句
     function oneParam(p) {
         // 使用Except去除某些headers
-        return `${peerConfig.exceptHeaders[p.name] === "annotation" ? "// " : ""}'${p.name}'${p.required ? "" : "?"} : ${p.type}; ${p.description ? "// " + p.description : ""}\n`;
+        return (peerConfig.exceptHeaders[p.name] === "annotation" ? "// " : "") + "'" + p.name + "'" + (p.required ? "" : "?") + " : " + p.type + "; " + (p.description ? "// " + p.description : "") + "\n";
     }
     // @example :  #/definitions/7.1.1创建团队Request
     function getRef(path) {
-        const index = path.split("/").pop() + "";
+        var index = path.split("/").pop() + "";
         return swagger.definitions[index.replace("~1", "/")];
     }
     function buildOneRule(p) {
@@ -23,15 +21,15 @@ function Peer(swagger, nameConfig, peerConfig) {
         if (p.description) {
             p.description = p.description.replace(/\n/g, " ");
         }
-        return `${p.name}${p.required ? "" : "?"} : ${p.type}; ${p.description ? "// " + p.description : ""}\n`;
+        return "" + p.name + (p.required ? "" : "?") + " : " + p.type + "; " + (p.description ? "// " + p.description : "") + "\n";
     }
     function seeObject(p) {
-        let rus = "";
+        var rus = "";
         if (p.type === "object") {
             if (p.properties) {
-                const props = p.properties;
-                Object.getOwnPropertyNames(props).forEach(propName => {
-                    const prop = props[propName];
+                var props_1 = p.properties;
+                Object.getOwnPropertyNames(props_1).forEach(function (propName) {
+                    var prop = props_1[propName];
                     rus += buildOneRule({
                         name: propName,
                         type: schema(prop),
@@ -45,7 +43,7 @@ function Peer(swagger, nameConfig, peerConfig) {
         return rus;
     }
     function seeArray(p) {
-        let rus = "";
+        var rus = "";
         if (p.type === "array") {
             if (p.items) {
                 rus = schema(p.items);
@@ -55,7 +53,7 @@ function Peer(swagger, nameConfig, peerConfig) {
         return rus;
     }
     function schema(p) {
-        let ref;
+        var ref;
         if (p.$ref) {
             ref = getRef(p.$ref);
         }
@@ -74,9 +72,9 @@ function Peer(swagger, nameConfig, peerConfig) {
         }
     }
     function parameters(arr) {
-        const apiOption = {};
-        arr.forEach(onep => {
-            const inType = onep.in;
+        var apiOption = {};
+        arr.forEach(function (onep) {
+            var inType = onep.in;
             if (onep.schema) {
                 apiOption[inType] = schema(onep.schema);
             }
@@ -92,11 +90,11 @@ function Peer(swagger, nameConfig, peerConfig) {
         return apiOption;
     }
     function response(obj) {
-        const resOption = {};
+        var resOption = {};
         if (!obj) {
             debugger;
         }
-        Object.getOwnPropertyNames(obj).forEach(d => {
+        Object.getOwnPropertyNames(obj).forEach(function (d) {
             if (obj[d].schema)
                 resOption[d] = schema(obj[d].schema);
             else {
@@ -106,9 +104,9 @@ function Peer(swagger, nameConfig, peerConfig) {
         return resOption;
     }
     // list the name set;
-    const nameArray = [];
+    var nameArray = [];
     function getName(str) {
-        const rus = str.split(" ").pop() + "";
+        var rus = str.split(" ").pop() + "";
         nameArray.push(rus);
         return getKey(rus);
     }
@@ -116,21 +114,21 @@ function Peer(swagger, nameConfig, peerConfig) {
         return nameConfig[d] ? nameConfig[d] : d;
     }
     function getNameConfigTs() {
-        let rus = nameArray
-            .map(d => {
-            const key = getKey(d);
+        var rus = nameArray
+            .map(function (d) {
+            var key = getKey(d);
             return '"' + d + '":"' + key + '"';
         })
             .join(", \n");
         // 格式化
         return JSON.stringify(JSON.parse("{" + rus + "}"), null, 2);
     }
-    Object.getOwnPropertyNames(swagger.paths).forEach(api => {
+    Object.getOwnPropertyNames(swagger.paths).forEach(function (api) {
         // api , url, /api/user/..
-        const oneApi = swagger.paths[api];
-        let methodOption = (tsOption[api] = {});
+        var oneApi = swagger.paths[api];
+        var methodOption = (tsOption[api] = {});
         // get, post
-        Object.getOwnPropertyNames(oneApi).forEach(method => {
+        Object.getOwnPropertyNames(oneApi).forEach(function (method) {
             methodOption[method] = {
                 parameters: parameters(oneApi[method].parameters),
                 responses: response(oneApi[method].responses),
@@ -141,11 +139,11 @@ function Peer(swagger, nameConfig, peerConfig) {
         config.name = getNameConfigTs();
     });
     // 分析tsOption得到ts file.
-    const tsSporeStr = analy_1.analy(tsOption, peerConfig.headStr);
+    var tsSporeStr = analy(tsOption, peerConfig.headStr);
     return {
         nameConfig: config.name,
-        tsSporeStr,
-        tsOption
+        tsSporeStr: tsSporeStr,
+        tsOption: tsOption
     };
 }
-exports.Peer = Peer;
+//# sourceMappingURL=peer.js.map

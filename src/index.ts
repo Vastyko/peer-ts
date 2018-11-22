@@ -1,8 +1,4 @@
-#! node
-// import { Peer } from "./engine/peer";
-
-// // main entrance
-// Peer();
+#!/usr/bin/env node
 
 import * as fs from "fs";
 import * as path from "path";
