@@ -20,5 +20,14 @@
   "module": "./build/index.js",
   "types": "./build/index.d.ts",
   "description": "convert your apib to typescript",
-  "deprecated": false
+  "deprecated": false,
+  "keywords": [
+    "typescript",
+    "apib",
+    "convert"
+  ],
+  "author": {
+    "name": "liumiao"
+  },
+  "license": "MIT"
 }
