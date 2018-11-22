@@ -8,14 +8,13 @@
   "scripts": {
     "build": "cd ./build \n && node ./index.js",
     "work": "tsc --watch",
-    "convert": "apib2swagger -i build/api.md -o swagger.json",
-    "server": "apib2swagger -i api.md -s -p 3000"
+    "convert": "apib2swagger -i test/api.apib -o test/swagger.json"
   },
   "bin": {
     "peer": "./build/index.js"
   },
   "name": "peer.ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "./build/index.js",
   "module": "./build/index.js",
   "types": "./build/index.d.ts",
