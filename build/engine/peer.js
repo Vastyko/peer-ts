@@ -1,5 +1,7 @@
-import { analy } from "./analy";
-export function Peer(swagger, nameConfig, peerConfig) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var analy_1 = require("./analy");
+function Peer(swagger, nameConfig, peerConfig) {
     // 记录Peer 生成的中间json; 最后解析tsOption生成的TypescriptSpore;
     var tsOption = {};
     // 记录peer运行生成的推荐配置文件
@@ -139,11 +141,12 @@ export function Peer(swagger, nameConfig, peerConfig) {
         config.name = getNameConfigTs();
     });
     // 分析tsOption得到ts file.
-    var tsSporeStr = analy(tsOption, peerConfig.headStr);
+    var tsSporeStr = analy_1.analy(tsOption, peerConfig.headStr);
     return {
         nameConfig: config.name,
         tsSporeStr: tsSporeStr,
         tsOption: tsOption
     };
 }
+exports.Peer = Peer;
 //# sourceMappingURL=peer.js.map

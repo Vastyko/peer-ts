@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Auto = /** @class */ (function () {
     function Auto() {
         this.value = [];
@@ -101,7 +103,7 @@ var OneName = /** @class */ (function () {
     };
     return OneName;
 }());
-export function analy(tsOption, headStr) {
+function analy(tsOption, headStr) {
     var nameCollector = [];
     var auto = new Auto();
     for (var api in tsOption) {
@@ -114,6 +116,7 @@ export function analy(tsOption, headStr) {
     }
     return headStr + nameCollector.join("\n\n") + auto.getValue();
 }
+exports.analy = analy;
 /*
 
 // [summary]

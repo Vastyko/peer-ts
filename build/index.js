@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-import * as fs from "fs";
-import * as path from "path";
-import * as jsonfile from "jsonfile";
-import { Peer } from "./engine/peer";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var fs = require("fs");
+var path = require("path");
+var jsonfile = require("jsonfile");
+var peer_1 = require("./engine/peer");
 var apib2swagger = require("apib2swagger"), options = { preferReference: true };
 function ConvertToSwagger(apiPath, func) {
     var apiStr = fs.readFileSync(apiPath).toString();
@@ -56,7 +58,7 @@ function PeerBin() {
     };
     if (obj) {
         ConvertToSwagger(apib, function (swagger) {
-            var peerObj = Peer(swagger, nameConfig, peerCompile);
+            var peerObj = peer_1.Peer(swagger, nameConfig, peerCompile);
             // 输出nameConfig
             fs.writeFileSync(outputNameConfig, peerObj.nameConfig, { flag: "w" });
             // 输出TypesccriptSpore;
