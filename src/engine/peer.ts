@@ -70,6 +70,7 @@ export function Peer(
   function seeObject(p) {
     let rus = "";
     if (p.type === "object") {
+      let allRequired = p.required ? false : true;
       if (p.properties) {
         const props = p.properties as Props;
         Object.getOwnPropertyNames(props).forEach(propName => {
@@ -78,7 +79,7 @@ export function Peer(
             name: propName,
             type: schema(prop),
             description: prop.description,
-            required: true
+            required: allRequired || p.required.indexOf(propName) >= 0
           });
         });
       }

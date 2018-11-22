@@ -28,6 +28,7 @@ function Peer(swagger, nameConfig, peerConfig) {
     function seeObject(p) {
         var rus = "";
         if (p.type === "object") {
+            var allRequired_1 = p.required ? false : true;
             if (p.properties) {
                 var props_1 = p.properties;
                 Object.getOwnPropertyNames(props_1).forEach(function (propName) {
@@ -36,7 +37,7 @@ function Peer(swagger, nameConfig, peerConfig) {
                         name: propName,
                         type: schema(prop),
                         description: prop.description,
-                        required: true
+                        required: allRequired_1 || p.required.indexOf(propName) >= 0
                     });
                 });
             }
