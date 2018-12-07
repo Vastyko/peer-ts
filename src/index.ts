@@ -11,6 +11,8 @@ var apib2swagger = require("apib2swagger"),
 function ConvertToSwagger(apiPath: any, func: (swagger: any) => void) {
   const apiStr = fs.readFileSync(apiPath).toString();
 
+  // 去掉特殊的字符 保证windows上的运行;
+  apiStr.replace(/\r\n/g, "\n");
   function CheckApiStr(str: string) {
     let rus = "";
     let len = str.length;

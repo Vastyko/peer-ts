@@ -8,6 +8,8 @@ var peer_1 = require("./engine/peer");
 var apib2swagger = require("apib2swagger"), options = { preferReference: true };
 function ConvertToSwagger(apiPath, func) {
     var apiStr = fs.readFileSync(apiPath).toString();
+    // 去掉特殊的字符 保证windows上的运行;
+    apiStr.replace(/\r\n/g, "\n");
     function CheckApiStr(str) {
         var rus = "";
         var len = str.length;
